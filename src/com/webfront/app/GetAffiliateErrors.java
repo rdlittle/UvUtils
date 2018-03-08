@@ -25,8 +25,11 @@ import java.util.logging.Logger;
  *
  * @author rlittle
  */
-public class GetAffiliateErrors extends AbstractApp {
+public class GetAffiliateErrors extends BaseApp {
 
+    UvData aoRec;
+    UvData aeRec;
+    
     @Override
     public void setup(Program program, Profile readProfile, Profile writeProfile) {
         try {

@@ -18,7 +18,7 @@ import com.webfront.util.UvConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class SetPlacement extends AbstractApp {
+class SetPlacement extends BaseApp {
 
     UniJava uv;
     UniFile localFile;

@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @author rlittle
  */
-public class GetCommissionErrors extends AbstractApp {
+public class GetCommissionErrors extends BaseApp {
 
     @Override
     public void teardown() {

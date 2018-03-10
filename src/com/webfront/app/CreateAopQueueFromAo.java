@@ -8,7 +8,6 @@ package com.webfront.app;
 import asjava.uniclientlibs.UniDynArray;
 import static asjava.uniclientlibs.UniTokens.UVE_NOERROR;
 import static asjava.uniclientlibs.UniTokens.UVE_RNF;
-import asjava.uniobjects.UniFile;
 import static asjava.uniobjects.UniObjectsTokens.LOCK_NO_LOCK;
 import asjava.uniobjects.UniSelectList;
 import asjava.uniobjects.UniSelectListException;
@@ -140,7 +139,6 @@ public class CreateAopQueueFromAo extends BaseApp {
             case UVE_RNF:
                 break;
         }
-        
         result = FileUtils.getRecord(readFiles.get("SEQ.FILE"), seqRec);
         String queueId = seqRec.getData().extract(1).toString();
         nextQueue = Integer.parseInt(queueId);

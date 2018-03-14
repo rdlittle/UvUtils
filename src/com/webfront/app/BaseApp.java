@@ -12,6 +12,8 @@ import asjava.uniobjects.UniSelectList;
 import asjava.uniobjects.UniSelectListException;
 import asjava.uniobjects.UniSession;
 import asjava.uniobjects.UniSessionException;
+import asjava.uniobjects.UniSubroutine;
+import asjava.uniobjects.UniSubroutineException;
 import com.webfront.u2.model.Profile;
 import com.webfront.u2.model.Program;
 import com.webfront.u2.model.UvFile;
@@ -84,6 +86,30 @@ public class BaseApp extends AbstractApp {
 //        UniDynArray recList = list.readList();
 //        totalRecords = new Double(recList.dcount());
         return list;
+    }
+    
+    public String[] getDateTime() {
+        String dt[] = new String[2];
+        try {
+            UniSubroutine dtSub = readSession.subroutine("getUtilTimeDateStamp.uvs", 3);
+            UniDynArray iList = new UniDynArray();
+            UniDynArray oList = new UniDynArray();
+            UniDynArray eList = new UniDynArray();
+            dtSub.setArg(0, iList);
+            dtSub.setArg(1, oList);
+            dtSub.setArg(2, eList);
+            dtSub.call();
+            oList = new UniDynArray(dtSub.getArg(1));
+            dt[0] = oList.extract(6).toString();
+            String t = oList.extract(2).toString();
+            dt[1] = t.split("\\.")[0];
+            return dt;
+        } catch (UniSessionException ex) {
+            Logger.getLogger(BaseApp.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UniSubroutineException ex) {
+            Logger.getLogger(BaseApp.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return dt;
     }
 
     public void setProgress(Progress p) {

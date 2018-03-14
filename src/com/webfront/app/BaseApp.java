@@ -87,7 +87,7 @@ public class BaseApp extends AbstractApp {
 //        totalRecords = new Double(recList.dcount());
         return list;
     }
-    
+
     public String[] getDateTime() {
         String dt[] = new String[2];
         try {
@@ -120,8 +120,12 @@ public class BaseApp extends AbstractApp {
     public void teardown() {
         try {
             closeFiles();
-            readSession.disconnect();
-            writeSession.disconnect();
+            if (readSession.isActive()) {
+                readSession.disconnect();
+            }
+            if (writeSession.isActive()) {
+                writeSession.disconnect();
+            }
             progress.updateLed(null, false);
             progress.updateProgressBar(0D);
         } catch (UniSessionException ex) {
@@ -138,7 +142,7 @@ public class BaseApp extends AbstractApp {
 
     @Override
     public void setup(Program program, Profile readProfile, Profile writeProfile) {
-        this.program=program;
+        this.program = program;
         if (readProfile == null) {
             try {
                 throw new Exception("You must specify read profile");

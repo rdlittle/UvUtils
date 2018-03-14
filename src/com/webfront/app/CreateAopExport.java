@@ -75,6 +75,9 @@ public class CreateAopExport extends BaseApp {
             return false;
         }
         int attrs = aopUploadRec.getData().dcount();
+        Double itemCount = new Double(attrs);
+        Double itemsDone = new Double(0D);
+        Double pctDone = new Double(0D);
         UvData data = new UvData();
         for (int nextSeq = 1; nextSeq <= attrs; nextSeq++) {
             String text = aopUploadRec.getData().extract(nextSeq).toString();
@@ -82,6 +85,10 @@ public class CreateAopExport extends BaseApp {
             data.setId(aopExportId);
             data.setData(toDynArray(text));
             result = FileUtils.writeRecord(writeFiles.get("AOP.EXPORT"), data);
+            itemsDone++;
+            pctDone = itemsDone / itemCount;
+            progress.display(itemsDone.intValue() + " of " + itemCount.intValue() + " : " + (pctDone.intValue() * 100) + "%");
+            progress.updateProgressBar(pctDone);
         }
         teardown();
         return true;

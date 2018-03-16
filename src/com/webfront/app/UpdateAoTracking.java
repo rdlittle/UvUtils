@@ -152,7 +152,7 @@ public class UpdateAoTracking extends BaseApp {
                 if (result == UVE_RNF) {
                     result = FileUtils.getRecord(readFiles.get("ORDERS.HISTORY"), uvData);
                     if (result == UVE_RNF) {
-                        throw new NotFoundException("MA order# " + orderId + " not found");
+                        throw new NotFoundException("Order# " + orderId + " not found");
                     }
                 }
             }

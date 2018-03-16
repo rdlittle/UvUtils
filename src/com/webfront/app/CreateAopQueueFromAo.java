@@ -116,7 +116,9 @@ public class CreateAopQueueFromAo extends BaseApp {
                     aopQueueRec.getData().insert(28, 1, tmp[2]);
                     aopQueueRec.getData().insert(29, 1, "0");
                 }
-
+                aopQueueRec.getData().replace(32, tmp[1]);
+                aopQueueRec.getData().replace(33, tmp[2]);
+                
                 int result = FileUtils.writeRecord(writeFiles.get("AOP.QUEUE"), aopQueueRec);
             }
             teardown();

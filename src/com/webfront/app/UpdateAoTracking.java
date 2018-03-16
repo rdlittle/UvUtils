@@ -227,6 +227,7 @@ public class UpdateAoTracking extends BaseApp {
         aoTrackingRec.setData(aot);
         int result = FileUtils.writeRecord(writeFiles.get("AO.TRACKING"), aoTrackingRec);
         if (result == -1) {
+            result = FileUtils.unlockRecord(writeFiles.get("AO.TRACKING"), aoTrackingRec);
             progress.display("Error writing AO.TRACKING " + aoTrackingRec.getId());
         }
     }

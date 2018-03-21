@@ -6,9 +6,11 @@
 package com.webfront.util;
 
 import asjava.uniclientlibs.UniDynArray;
+import static asjava.uniclientlibs.UniTokens.UVE_NOERROR;
 import asjava.uniobjects.UniFile;
 import asjava.uniobjects.UniFileException;
 import asjava.uniobjects.UniObjectsTokens;
+import static asjava.uniobjects.UniObjectsTokens.LOCK_MY_FILELOCK;
 import com.webfront.u2.client.UvClient;
 import com.webfront.u2.model.UvData;
 import java.util.logging.Level;
@@ -55,7 +57,10 @@ public class FileUtils {
             Logger.getLogger(UvClient.class.getName()).log(Level.SEVERE, null, ufe);
             return UniObjectsTokens.LOCK_NO_LOCK;
         }
-        return UniObjectsTokens.LOCK_MY_READU;
+        if(getRecord(file,data)!= UVE_NOERROR) {
+            return UniObjectsTokens.LOCK_NO_LOCK;
+        }
+        return LOCK_MY_FILELOCK;
     }
 
     public static int writeRecord(UniFile file, UvData data) {

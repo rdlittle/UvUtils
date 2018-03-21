@@ -74,7 +74,8 @@ public class CreateAopQueueFromAo extends BaseApp {
                 }
                 itemsDone++;
                 pctDone = itemsDone / itemCount;
-                progress.display(itemsDone.intValue() + " of " + itemCount.intValue() + " : " + (pctDone.intValue() * 100) + "%");
+                Double pctDoneText = pctDone * 100;
+                progress.display(itemsDone.intValue() + " of " + itemCount.intValue() + " : " + (pctDoneText.intValue()) + "%");
                 progress.updateProgressBar(pctDone);
                 aoRec = new UvData();
                 aoRec.setId(id);

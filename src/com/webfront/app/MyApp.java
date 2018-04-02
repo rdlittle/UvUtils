@@ -5,32 +5,39 @@
  */
 package com.webfront.app;
 
-import com.webfront.u2.model.Profile;
-import com.webfront.u2.model.Program;
-import com.webfront.u2.model.Prompt;
+import asjava.uniobjects.UniCommandException;
+import asjava.uniobjects.UniSelectList;
+import asjava.uniobjects.UniSelectListException;
+import asjava.uniobjects.UniSessionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author rlittle
  */
-public class MyApp extends AbstractApp {
-
-    @Override
-    public void setup(Program program, Profile readProfile, Profile writeProfile) {
-        for(Prompt p : program.getPrompts().values()) {
-            String msg = p.getMessage();
-            System.out.println(p.getNum()+": "+msg);
-        }
-    }
+public class MyApp extends BaseApp {
 
     @Override
     public boolean mainLoop() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            UniSelectList list = doSelect(readSession,program.getSelectCriteria());
+            while(!list.isLastRecordRead()) {
+                String itemId = list.next().toString();
+                if(itemId.isEmpty()) {
+                    continue;
+                }
+                System.out.println(list.next().toString());
+            }
+            teardown();
+        } catch (UniSessionException ex) {
+            Logger.getLogger(MyApp.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UniCommandException ex) {
+            Logger.getLogger(MyApp.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UniSelectListException ex) {
+            Logger.getLogger(MyApp.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
     }
 
-    @Override
-    public void teardown() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
 }

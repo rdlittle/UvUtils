@@ -6,6 +6,8 @@
 package com.webfront.app;
 
 import asjava.uniclientlibs.UniDynArray;
+import asjava.uniobjects.UniCommand;
+import asjava.uniobjects.UniCommandException;
 import asjava.uniobjects.UniFile;
 import asjava.uniobjects.UniFileException;
 import asjava.uniobjects.UniSelectList;
@@ -83,8 +85,17 @@ public class BaseApp extends AbstractApp {
         UniSelectList list;
         list = session.selectList(0);
         list.getList(listName);
-//        UniDynArray recList = list.readList();
-//        totalRecords = new Double(recList.dcount());
+        return list;
+    }
+    
+    public UniSelectList doSelect(UniSession session, String[] criteria) throws UniSessionException, UniCommandException {
+        UniCommand command;
+        for (String cmd : criteria) {
+            command = session.command();
+            command.setCommand(cmd);
+            command.exec();
+        }
+        UniSelectList list = session.selectList(0);
         return list;
     }
 

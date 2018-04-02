@@ -168,7 +168,6 @@ public class CreateAopQueueFromAo extends BaseApp {
             case UVE_RNF:
                 break;
         }
-        result = FileUtils.getRecord(readFiles.get("SEQ.FILE"), seqRec);
         String queueId = seqRec.getData().extract(1).toString();
         nextQueue = Integer.parseInt(queueId);
 

@@ -35,6 +35,7 @@ public class FileUtils {
                 }
             }
         } catch (UniFileException ex) {
+            data.setData(new UniDynArray());
             if (ex.getErrorCode() == UniObjectsTokens.UVE_RNF) {
                 return UniObjectsTokens.UVE_RNF;
             }

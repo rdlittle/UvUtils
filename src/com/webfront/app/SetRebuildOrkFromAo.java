@@ -38,7 +38,7 @@ public class SetRebuildOrkFromAo extends BaseApp {
     UvData aoRec;
     UvData orderRec;
     UvData storeRec;
-    
+
     String now;
 
     public SetRebuildOrkFromAo() {
@@ -71,7 +71,7 @@ public class SetRebuildOrkFromAo extends BaseApp {
             String fullTime = oList.extract(2).toString();
             String[] time = fullTime.split("\\.");
             now = date + "*" + time[0];
-            
+
             UniSelectList list = readSession.selectList(3);
             list.getList(listName);
             UniDynArray temp = list.readList();
@@ -141,15 +141,6 @@ public class SetRebuildOrkFromAo extends BaseApp {
             readFiles.put(fileName, session.openFile(fileName));
         }
     }
-
-//    public UniSelectList getList(UniSession session, String listName) throws UniSessionException, UniSelectListException {
-//        UniSelectList list;
-//        list = session.selectList(0);
-//        list.getList(listName);
-//        UniDynArray recList = list.readList();
-//        totalRecords = new Double(recList.dcount());
-//        return list;
-//    }
 
     public boolean findAo(UvData record) {
         isHistory = false;
@@ -279,6 +270,7 @@ public class SetRebuildOrkFromAo extends BaseApp {
             ork.replace(14, "0");
             ork.replace(15, "0");
             ork.replace(16, "0");
+            ork.replace(18, "");
             ork.replace(21, "0");
             ork.replace(22, "0");
             ork.replace(23, aoRec.getData().extract(181, 1).toString());
@@ -296,8 +288,12 @@ public class SetRebuildOrkFromAo extends BaseApp {
                 ork.replace(14, "0");
                 ork.replace(15, "0");
                 ork.replace(16, "0");
+                ork.replace(18, "");
+                ork.replace(19, "");
                 ork.replace(21, "0");
                 ork.replace(22, "0");
+                ork.replace(23, aoRec.getData().extract(181, 1).toString());
+                ork.replace(27, storeRec.getData().extract(1, 1).toString());
                 ork.replace(30, now);
             }
         }
@@ -361,11 +357,11 @@ public class SetRebuildOrkFromAo extends BaseApp {
             }
         }
 
-        orkRec.setData(ork);
         result = FileUtils.lockRecord(readFiles.get("ORDER.REL.KEYS"), orkRec);
         if (result == UniObjectsTokens.LOCK_NO_LOCK) {
             System.out.println("Error locking ORDER.REL.KEYS " + orkRec.getId());
         }
+        orkRec.setData(ork);
         result = FileUtils.writeRecord(readFiles.get("ORDER.REL.KEYS"), orkRec);
         if (result == -1) {
             result = FileUtils.unlockRecord(readFiles.get("ORDER.REL.KEYS"), orkRec);

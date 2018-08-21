@@ -96,29 +96,29 @@ public class SetRebuildOrkFromAo extends BaseApp {
                     progress.display("Can't file affiliate order " + id);
                     continue;
                 }
-                String orkId = aoRec.getData().extract(197).toString();
-                String orderId = aoRec.getData().extract(30).toString();
-                String aggId = aoRec.getData().extract(181, 1).toString();
-                String storeId = aoRec.getData().extract(157, 1).toString();
-                String affiliateStoreId = aggId + "*" + storeId;
-                if (orkId.isEmpty()) {
-                    progress.display("No ORDER.REL.KEY in AO " + id);
-                    continue;
-                }
-                hasOrder = !orderId.isEmpty();
-                if (!orderId.isEmpty()) {
-                    if (!findOrder(orderId)) {
-                        progress.display("Can't read order " + orderId);
-                        continue;
-                    }
-                }
-                if (!getStore(affiliateStoreId)) {
-                    if (!getIbvVendor(aggId, storeId)) {
-                        progress.display("Can't file affiliate store " + affiliateStoreId);
-                        continue;
-                    }
-                }
-                updateOrderRelKeys(orkId);
+//                String orkId = aoRec.getData().extract(197).toString();
+//                String orderId = aoRec.getData().extract(30).toString();
+//                String aggId = aoRec.getData().extract(181, 1).toString();
+//                String storeId = aoRec.getData().extract(157, 1).toString();
+//                String affiliateStoreId = aggId + "*" + storeId;
+//                if (orkId.isEmpty()) {
+//                    progress.display("No ORDER.REL.KEY in AO " + id);
+//                    continue;
+//                }
+//                hasOrder = !orderId.isEmpty();
+//                if (!orderId.isEmpty()) {
+//                    if (!findOrder(orderId)) {
+//                        progress.display("Can't read order " + orderId);
+//                        continue;
+//                    }
+//                }
+//                if (!getStore(affiliateStoreId)) {
+//                    if (!getIbvVendor(aggId, storeId)) {
+//                        progress.display("Can't file affiliate store " + affiliateStoreId);
+//                        continue;
+//                    }
+//                }
+//                updateOrderRelKeys(orkId);
             }
         } catch (UniSelectListException ex) {
             Logger.getLogger(SetRebuildOrkFromAo.class.getName()).log(Level.SEVERE, null, ex);

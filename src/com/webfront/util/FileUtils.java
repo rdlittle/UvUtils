@@ -22,6 +22,15 @@ import java.util.logging.Logger;
  */
 public class FileUtils {
 
+    public static int deleteRecord(UniFile file, UvData data) {
+        try {
+            file.deleteRecord(data.getId());
+        } catch (UniFileException ex) {
+            return UniObjectsTokens.UVE_EIO;
+        }
+        return UniObjectsTokens.UVE_NOERROR;
+    }
+    
     public static int getRecord(UniFile file, UvData data) {
         UniDynArray record;
         try {

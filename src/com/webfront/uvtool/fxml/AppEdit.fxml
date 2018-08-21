@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane id="AnchorPane" prefHeight="637.0" prefWidth="622.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.webfront.uvtool.controller.ProgramController">
+   <children>
+      <ComboBox fx:id="cbAppSelector" layoutX="14.0" layoutY="14.0" onAction="#onAppSelect" prefHeight="26.0" prefWidth="568.0" promptText="Select application" />
+      <TextField fx:id="txtPackage" layoutX="14.0" layoutY="61.0" prefHeight="26.0" prefWidth="568.0" promptText="Package" />
+      <VBox layoutX="16.0" layoutY="100.0" prefHeight="523.0" prefWidth="568.0" spacing="10.0">
+         <children>
+            <Label text="Description" />
+            <TextArea fx:id="txtDescription" onKeyTyped="#onDescriptionKeyTyped" prefHeight="231.0" prefWidth="568.0" />
+            <HBox prefHeight="34.0" prefWidth="568.0" spacing="230.0">
+               <children>
+                  <Label text="Read Files" />
+                  <Label text="Write Files" />
+               </children>
+            </HBox>
+            <HBox prefHeight="171.0" prefWidth="568.0" spacing="10.0">
+               <children>
+                  <TextArea fx:id="txtReadFiles" prefHeight="253.0" prefWidth="287.0" />
+                  <TextArea fx:id="txtWriteFiles" prefHeight="168.0" prefWidth="277.0" />
+               </children>
+            </HBox>
+            <TableView fx:id="tblInputs" editable="true" prefHeight="200.0" prefWidth="200.0">
+              <columns>
+                <TableColumn fx:id="tblColInputNumber" prefWidth="75.0" resizable="false" sortable="false" text="Number" />
+                <TableColumn fx:id="tblColPrompt" onEditCancel="#onEditCancel" onEditStart="#onEditStart" prefWidth="492.0" resizable="false" sortable="false" text="Message" />
+              </columns>
+            </TableView>
+            <CheckBox fx:id="chkIsSubroutine" mnemonicParsing="false" text="This is a subroutine wrapper" />
+            <HBox alignment="BOTTOM_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+               <children>
+                  <Button fx:id="btnCancel" mnemonicParsing="false" prefHeight="26.0" prefWidth="70.0" text="Cancel" />
+                  <Button fx:id="btnDelete" mnemonicParsing="false" onAction="#onBtnDelete" prefHeight="26.0" prefWidth="70.0" text="Delete" />
+                  <Button fx:id="btnSave" mnemonicParsing="false" onAction="#onBtnSave" prefHeight="26.0" prefWidth="70.0" text="Save" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <Button fx:id="btnAddRow" layoutX="585.0" layoutY="450.0" mnemonicParsing="false" onAction="#onAddRow" text="+" />
+      <Button fx:id="btnDeleteRow" disable="true" layoutX="585.0" layoutY="476.0" mnemonicParsing="false" onAction="#onDeleteRow" prefHeight="26.0" prefWidth="29.0" text="-" />
+   </children>
+</AnchorPane>

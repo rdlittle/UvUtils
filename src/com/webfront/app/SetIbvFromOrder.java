@@ -61,7 +61,7 @@ public class SetIbvFromOrder extends BaseApp {
                 if (orderId == null) {
                     continue;
                 }
-                
+
                 itemsDone += 1;
                 pctDone = itemsDone / itemCount;
                 progress.updateProgressBar(pctDone);
@@ -120,7 +120,9 @@ public class SetIbvFromOrder extends BaseApp {
     void updateIbv(UvData orderRec) {
         UniDynArray placements = orderRec.getData().extract(151);
         int placementCount = placements.dcount(1);
+        boolean isFixed;
         for (int i = 1; i <= placementCount; i++) {
+            isFixed = false;
             UvData ibvRec = new UvData();
             UniDynArray uda = new UniDynArray();
             String placementId = orderRec.getData().extract(151, i).toString();
@@ -139,6 +141,9 @@ public class SetIbvFromOrder extends BaseApp {
             }
             Result r = SysUtils.locate(target, uda, 2);
             if (r.isSuccess) {
+                if (!uda.extract(3, i).equals(placementAmount)) {
+                    isFixed = true;
+                }
                 uda.replace(3, r.location, placementAmount);
                 ibvRec.setData(uda);
             } else {
@@ -158,8 +163,14 @@ public class SetIbvFromOrder extends BaseApp {
                     progress.display("Couldn't find " + target + " in IBV/IBV.PROJ " + placementId);
                     continue;
                 }
+                if (!uda.extract(3, i).equals(placementAmount)) {
+                    isFixed = true;
+                }
                 uda.replace(3, r.location, placementAmount);
                 ibvRec.setData(uda);
+                if(isFixed) {
+                    progress.display(placementId+" was fixed");
+                }
             }
             result = FileUtils.writeRecord(writeFiles.get(ibvFileName), ibvRec);
             result = FileUtils.unlockRecord(writeFiles.get(ibvFileName), ibvRec);

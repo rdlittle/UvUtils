@@ -6,7 +6,7 @@
 package com.webfront.app;
 
 import asjava.uniclientlibs.UniDynArray;
-import asjava.uniclientlibs.UniStringException;
+import asjava.uniclientlibs.UniException;
 import static asjava.uniclientlibs.UniTokens.UVE_RNF;
 import static asjava.uniobjects.UniObjectsTokens.LOCK_NO_LOCK;
 import asjava.uniobjects.UniSelectList;
@@ -17,9 +17,11 @@ import asjava.uniobjects.UniSubroutineException;
 import com.webfront.exception.NotFoundException;
 import com.webfront.exception.RecordLockException;
 import com.webfront.u2.model.UvData;
+import com.webfront.util.ExchangeRate;
 import com.webfront.util.FileUtils;
 import com.webfront.util.Result;
 import com.webfront.util.SysUtils;
+import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +45,11 @@ public class RecalcIbv extends BaseApp {
     String aoFileName;
     String orderFileName;
     String ibvFileName;
+    String reportingCurrency;
+    String homeCountry;
+    String exchangeRate;
+    String orderDate;
+    private ExchangeRate rates;
 
     @Override
     public boolean mainLoop() {
@@ -56,6 +63,7 @@ public class RecalcIbv extends BaseApp {
         aoFileName = "";
         orderFileName = "";
         try {
+            this.rates = new ExchangeRate(readSession);
             UniSelectList list = readSession.selectList(3);
             list.getList(listName);
             UniDynArray temp = list.readList();
@@ -77,20 +85,35 @@ public class RecalcIbv extends BaseApp {
                 UvData aoRec = null;
                 UvData orderRec = null;
                 UvData ordersDetailRec = null;
-                
+
                 // get AFFILIATE.ORDERS/AOP.HIST rec
                 try {
                     aoRec = getAo(aoId);
                 } catch (NotFoundException ex) {
-                    progress.display("AFFILIATE.ORDERS " + aoId);
+                    progress.display(aoId+" not found");
+                    continue;
                 } catch (RecordLockException ex) {
                     Logger.getLogger(RecalcIbv.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                if (aoRec.getData() == null) {
+                if (aoRec == null) {
                     progress.display("AFFILIATE.ORDERS " + aoId + " is null");
                     releaseAo(aoRec);
                     continue;
                 }
+                
+                orderDate = aoRec.getData().extract(161).toString();
+                homeCountry = aoRec.getData().extract(290).toString();
+                reportingCurrency = aoRec.getData().extract(368).toString();
+                
+                try {
+                    exchangeRate = rates.getExchangeRate(reportingCurrency, "USD", orderDate);
+                } catch (UniException ex) {
+                    Logger.getLogger(RecalcIbv.class.getName()).log(Level.SEVERE, null, ex);
+                    progress.display("Error from ExchangeRates: "+ex.getMessage());
+                    releaseAo(aoRec);
+                    continue;
+                }
+
                 maOrderId = aoRec.getData().extract(30).toString();
                 if (maOrderId.isEmpty()) {
                     progress.display("AFFILIATE.ORDERS<30> is empty" + aoId);
@@ -129,6 +152,7 @@ public class RecalcIbv extends BaseApp {
                         releaseOrder(orderRec);
                         continue;
                     }
+                    ibv = applyExchRate(ibv, exchangeRate);
                     int placementCount = orderRec.getData().extract(152).dcount(1);
                     UniDynArray uda = aoRec.getData();
 
@@ -183,18 +207,22 @@ public class RecalcIbv extends BaseApp {
         isReleased = false;
         isArchive = false;
         aoFileName = "AFFILIATE.ORDERS";
-        int result = FileUtils.lockRecord(writeFiles.get("AFFILIATE.ORDERS"), uvData);
+        int result = FileUtils.lockRecord(writeFiles.get(aoFileName), uvData);
         if (result == LOCK_NO_LOCK) {
             throw new RecordLockException("AFFILIATE.ORDERS lock error " + aoId);
         }
         if (result == UVE_RNF) {
+            result = FileUtils.unlockRecord(writeFiles.get(aoFileName), uvData);
             isReleased = true;
             aoFileName = "AOP.HIST";
-            result = FileUtils.getRecord(writeFiles.get("AOP.HIST"), uvData);
+            result = FileUtils.getRecord(writeFiles.get(aoFileName), uvData);
             if (result == UVE_RNF) {
-                result = FileUtils.getRecord(writeFiles.get("AOP.HIST.ARCHIVE"), uvData);
+                result = FileUtils.unlockRecord(writeFiles.get(aoFileName), uvData);
+                aoFileName = "AOP.HIST.ARCHIVE";
+                result = FileUtils.getRecord(writeFiles.get(aoFileName), uvData);
                 isArchive = true;
                 if (result == UVE_RNF) {
+                    result = FileUtils.unlockRecord(writeFiles.get(aoFileName), uvData);
                     aoFileName = null;
                     throw new NotFoundException(aoId + " not found");
                 }
@@ -402,5 +430,22 @@ public class RecalcIbv extends BaseApp {
         if (ordersDetailRec != null) {
             int result = FileUtils.writeRecord(writeFiles.get("ORDERS.DETAIL"), ordersDetailRec);
         }
+    }
+
+    UniDynArray applyExchRate(UniDynArray amt, String exchRate) {
+        Double rate = Double.parseDouble(exchRate);
+        NumberFormat fmt = NumberFormat.getInstance();
+        fmt.setMaximumFractionDigits(4);
+        fmt.setGroupingUsed(false);
+        int aCount = amt.dcount(1);
+        for (int a = 1; a<= aCount; a++) {
+            String ibvAmt = amt.extract(1, a).toString();
+            Double ibv = Double.parseDouble(ibvAmt);
+            Double result = (ibv * rate);
+            fmt.setMaximumFractionDigits(0);
+            String convertedAmt = fmt.format(result).toString();
+            amt.replace(1, a, convertedAmt);
+        }
+        return amt;
     }
 }

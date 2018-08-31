@@ -62,7 +62,7 @@ public class CreateAwardGptsTrans extends BaseApp {
                 UvData orderRec = null;
                 UvData ordersDetailRec = null;
 
-                //   get ORDERS/ORDERS.RELEASE rec
+                // get ORDERS/ORDERS.RELEASE rec
                 try {
                     orderRec = getOrder(maOrderId);
                 } catch (NotFoundException ex) {

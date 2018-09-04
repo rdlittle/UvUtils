@@ -95,10 +95,10 @@ public class CreateAwardGptsTrans extends BaseApp {
                     String pcId = orderRec.getData().extract(8).toString();
                     progress.display("Rebuild summary "+pcId);
                     if (pcId.startsWith("C")) {
-                        pcId.substring(1);
+                        pcId = pcId.substring(1);
                         String hcc = getHomeCountry(pcId);
                         if (hcc != "") {
-                            rebuildSummary(pcId);
+                            rebuildSummary(pcId+"*"+hcc);
                         }
                     }
                 } catch (UniException ex) {
@@ -225,7 +225,7 @@ public class CreateAwardGptsTrans extends BaseApp {
         UniDynArray oList = new UniDynArray();
         UniDynArray eList = new UniDynArray();
         iList.replace(4, summaryId);
-        UniSubroutine subroutine = writeSession.subroutine("setCashbackUtilRebuildSummary.uvs", 3);
+        UniSubroutine subroutine = writeSession.subroutine("setCashbackutilRebuildSummary.uvs", 3);
         subroutine.setArg(0, iList);
         subroutine.setArg(1, oList);
         subroutine.setArg(2, eList);

@@ -79,7 +79,7 @@ public class CreateAwardGptsTrans extends BaseApp {
                     Logger.getLogger(RecalcIbv.class.getName()).log(Level.SEVERE, null, ex);
                     continue;
                 }
-                
+
                 try {
                     // First call makes the pending transaction
                     createGptsTrans(orderRec, ordersDetailRec);
@@ -90,10 +90,31 @@ public class CreateAwardGptsTrans extends BaseApp {
                     Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
+                // Rebuild GPTS.CUST.SUMMARY
+                try {
+                    String pcId = orderRec.getData().extract(8).toString();
+                    progress.display("Rebuild summary "+pcId);
+                    if (pcId.startsWith("C")) {
+                        pcId.substring(1);
+                        String hcc = getHomeCountry(pcId);
+                        if (hcc != "") {
+                            rebuildSummary(pcId);
+                        }
+                    }
+                } catch (UniException ex) {
+                    progress.display(ex.getMessage());
+                    Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (NotFoundException ex) {
+                    progress.display(ex.getMessage());
+                    Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
             }
         } catch (UniSessionException ex) {
+            progress.display(ex.getMessage());
             Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UniSelectListException ex) {
+            progress.display(ex.getMessage());
             Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
         }
         teardown();
@@ -123,19 +144,29 @@ public class CreateAwardGptsTrans extends BaseApp {
     }
 
     private void createGptsTrans(UvData orderRec, UvData ordersDetailRec) throws UniSessionException, UniSubroutineException, UniException {
-        int cb = Integer.parseInt(orderRec.getData().extract(375).toString());
-        String cbAmount = Integer.toString(Math.abs(cb));
-        Integer srp = Integer.parseInt(orderRec.getData().extract(26).toString());
-        String srpAmount = Integer.toString(Math.abs(srp));       
+        String cbAmount = orderRec.getData().extract(375).toString();
+        if (cbAmount == null || cbAmount.isEmpty() || cbAmount == "") {
+            cbAmount = "0";
+        }
+        int cb = Integer.parseInt(cbAmount);
+        cbAmount = Integer.toString(Math.abs(cb));
+
+        String srpAmount = orderRec.getData().extract(26).toString();
+        if (srpAmount == null || srpAmount == "") {
+            srpAmount = "0";
+        }
+        Integer srp = Integer.parseInt(srpAmount);
+        srpAmount = Integer.toString(Math.abs(srp));
+
         int ibv = SysUtils.sum(orderRec.getData().extract(149));
         String ibvAmount = Integer.toString(ibv);
         String isRefund = cb < 0 ? "1" : "0";
         String orderRef = orderRec.getData().extract(2).toString();
-        String aggId = orderRec.getData().extract(181,1).toString();
-        String storeId = orderRec.getData().extract(157,1).toString();
-        String storeName = ordersDetailRec.getData().extract(12,1).toString();
-        String affiliateStoreName = aggId + "*"+ storeId + "*" + storeName;
-        if(orderRef.startsWith("R")) {
+        String aggId = orderRec.getData().extract(181, 1).toString();
+        String storeId = orderRec.getData().extract(157, 1).toString();
+        String storeName = ordersDetailRec.getData().extract(12, 1).toString();
+        String affiliateStoreName = aggId + "*" + storeId + "*" + storeName;
+        if (orderRef.startsWith("R")) {
             try {
                 orderRef = readSession.oconv(orderRef, "mcn").toString();
             } catch (UniStringException ex) {
@@ -171,21 +202,58 @@ public class CreateAwardGptsTrans extends BaseApp {
         iList.replace(29, orderRec.getData().extract(165, 1).toString());
         iList.replace(33, ibvAmount);
         iList.replace(35, affiliateStoreName);
-        
+
         UniSubroutine subroutine = writeSession.subroutine("SET.GPTS.TRANS", 3);
         subroutine.setArg(0, iList);
         subroutine.setArg(1, oList);
         subroutine.setArg(2, eList);
-        
+
         subroutine.call();
-        
+
         eList = new UniDynArray(subroutine.getArg(2));
         int svrStatus = Integer.parseInt(eList.extract(1).toString());
         String svrMessage = eList.extract(2).toString();
         String svrCtrlCode = eList.extract(5).toString();
-        
-        if(svrStatus == -1) {
-            throw new UniException(svrCtrlCode+" "+svrMessage, 1);
+
+        if (svrStatus == -1) {
+            throw new UniException(svrCtrlCode + " " + svrMessage, 1);
         }
+    }
+
+    private void rebuildSummary(String summaryId) throws UniSessionException, UniSubroutineException, UniException {
+        UniDynArray iList = new UniDynArray();
+        UniDynArray oList = new UniDynArray();
+        UniDynArray eList = new UniDynArray();
+        iList.replace(4, summaryId);
+        UniSubroutine subroutine = writeSession.subroutine("setCashbackUtilRebuildSummary.uvs", 3);
+        subroutine.setArg(0, iList);
+        subroutine.setArg(1, oList);
+        subroutine.setArg(2, eList);
+
+        subroutine.call();
+
+        eList = new UniDynArray(subroutine.getArg(2));
+        int svrStatus = Integer.parseInt(eList.extract(1).toString());
+        String svrMessage = eList.extract(2).toString();
+        String svrCtrlCode = eList.extract(5).toString();
+        if (svrStatus == -1) {
+            throw new UniException(svrCtrlCode + " " + svrMessage, 1);
+        }
+    }
+
+    private String getHomeCountry(String id) throws NotFoundException {
+        UvData uvData = new UvData();
+        uvData.setId(id);
+        int attr = 125;
+        int result = FileUtils.getRecord(readFiles.get("CUST"), uvData);
+        if (result == UVE_RNF) {
+            result = FileUtils.getRecord(readFiles.get("EZ.CUST"), uvData);
+            if (result == UVE_RNF) {
+                throw new NotFoundException("CUST " + id + " not found");
+            }
+            attr = 15;
+        }
+        String hcc = uvData.getData().extract(attr).toString();
+        return hcc;
     }
 }

@@ -88,6 +88,7 @@ public class CreateAwardGptsTrans extends BaseApp {
                 } catch (UniException ex) {
                     progress.display(ex.getMessage());
                     Logger.getLogger(CreateAwardGptsTrans.class.getName()).log(Level.SEVERE, null, ex);
+                    continue;
                 }
 
                 // Rebuild GPTS.CUST.SUMMARY

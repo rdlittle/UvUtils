@@ -56,7 +56,6 @@ public class CorrectFnboOrdersDetail extends BaseApp {
                     ordersDetailRec = getOrdersDetail(maOrderId);
                     UniDynArray uda = ordersDetailRec.getData();
                     uda.insert(65, " ");
-                    uda.replace(66, uda.extract(65));
                     uda.replace(67, uda.extract(53));
                     uda.replace(68, uda.extract(54));
                     uda.replace(69, uda.extract(55));

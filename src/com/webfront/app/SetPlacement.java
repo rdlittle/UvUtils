@@ -2,14 +2,14 @@ package com.webfront.app;
 
 import asjava.uniclientlibs.UniDynArray;
 import static asjava.uniclientlibs.UniTokens.UVE_RNF;
-import asjava.uniobjects.UniCommand;
-import asjava.uniobjects.UniFile;
-import asjava.uniobjects.UniJava;
+import static asjava.uniobjects.UniObjectsTokens.LOCK_NO_LOCK;
 import asjava.uniobjects.UniSelectList;
 import asjava.uniobjects.UniSelectListException;
 import asjava.uniobjects.UniSessionException;
 import asjava.uniobjects.UniSubroutine;
 import asjava.uniobjects.UniSubroutineException;
+import com.webfront.exception.NotFoundException;
+import com.webfront.exception.RecordLockException;
 import com.webfront.u2.model.UvData;
 import com.webfront.util.FileUtils;
 import java.util.logging.Level;
@@ -17,10 +17,7 @@ import java.util.logging.Logger;
 
 public class SetPlacement extends BaseApp {
 
-//    UniJava uv;
-//    UniFile localFile;
     UniSubroutine remoteSub;
-//    UniCommand cmd;
     boolean isHistory;
 
     @Override
@@ -42,7 +39,7 @@ public class SetPlacement extends BaseApp {
             Double itemCount = new Double(recList.dcount());
             Double itemsDone = new Double(0);
             Double pctDone = new Double(0);
-            for(int ptr = 1; ptr <= itemCount; ptr ++) {
+            for (int ptr = 1; ptr <= itemCount; ptr++) {
                 String aoId = recList.extract(ptr).toString();
                 if (aoId.isEmpty()) {
                     continue;
@@ -53,18 +50,50 @@ public class SetPlacement extends BaseApp {
                 progress.display(aoId);
                 progress.updateProgressBar(pctDone);
 
-                UvData aoRec = new UvData();
-                aoRec.setId(aoId);
-                if (!findAo(aoRec)) {
-                    progress.display("Can't find AO " + aoId);
+                UvData aoRec = null;
+                UvData ordRelRec = null;
+                try {
+                    aoRec = getAffiliateOrder(aoId);
+                } catch (NotFoundException ex) {
+                    Logger.getLogger(SetPlacement.class.getName()).log(Level.SEVERE, null, ex);
+                    continue;
+                } catch (RecordLockException ex) {
+                    Logger.getLogger(SetPlacement.class.getName()).log(Level.SEVERE, null, ex);
                     continue;
                 }
+
+                String ordId = aoRec.getData().extract(30).toString();
+                boolean hasOrdersRelease = false;
+                if (!ordId.isEmpty()) {
+                    try {
+                        ordRelRec = getOrdersRelease(ordId);
+                        hasOrdersRelease = true;
+                    } catch (NotFoundException ex) {
+                        Logger.getLogger(SetPlacement.class.getName()).log(Level.SEVERE, null, ex);
+                        int result = FileUtils.unlockRecord(writeFiles.get("AFFILIATE.ORDERS"), aoRec);
+                        continue;
+                    } catch (RecordLockException ex) {
+                        Logger.getLogger(SetPlacement.class.getName()).log(Level.SEVERE, null, ex);
+                        int result = FileUtils.unlockRecord(writeFiles.get("AFFILIATE.ORDERS"), aoRec);
+                        continue;
+                    }
+                }
+
                 String payingId = aoRec.getData().extract(8).toString();
                 String orderDate = aoRec.getData().extract(161).toString();
                 String placement = callSub(payingId, orderDate);
-                if (!placement.isEmpty()) {
-                    aoRec.getData().replace(151, placement);
-                    int result = FileUtils.writeRecord(writeFiles.get("AFFILIATE.ORDERS"), aoRec);
+                if (placement.isEmpty()) {
+                    int result = FileUtils.unlockRecord(writeFiles.get("AFFILIATE.ORDERS"), aoRec);
+                    if(hasOrdersRelease) {
+                        result = FileUtils.unlockRecord(writeFiles.get("ORDERS.RELEASE"), ordRelRec);
+                    }
+                    continue;
+                }
+                aoRec.getData().replace(151, placement);
+                int result = FileUtils.writeRecord(writeFiles.get("AFFILIATE.ORDERS"), aoRec);
+                if (hasOrdersRelease) {
+                    ordRelRec.getData().replace(151, placement);
+                    result = FileUtils.writeRecord(writeFiles.get("ORDERS.RELEASE"), ordRelRec);
                 }
             }
         } catch (UniSelectListException ex) {
@@ -106,72 +135,25 @@ public class SetPlacement extends BaseApp {
         return oList.extract(1).toString();
     }
 
-    public boolean findAo(UvData record) {
-        int result;
-        isHistory = false;
-        result = FileUtils.getRecord(readFiles.get("AFFILIATE.ORDERS"), record);
-        switch (result) {
-            case -1:
-                return false;
-            case UVE_RNF:
-                return false;
+    private UvData getAffiliateOrder(String aoId) throws NotFoundException, RecordLockException {
+        UvData uvData = new UvData();
+        uvData.setId(aoId);
+        int result = FileUtils.lockRecord(writeFiles.get("AFFILIATE.ORDERS"), uvData);
+        if (result == UVE_RNF) {
+            result = FileUtils.unlockRecord(writeFiles.get("AFFILIATE.ORDERS"), uvData);
+            return null;
         }
-        return true;
+        return uvData;
     }
 
-    public static void main(String[] args) {
-//        SetPlacement sp = new SetPlacement();
-//        if (!sp.connect()) {
-//            System.out.println("Can't connect");
-//        } else {
-//            try {
-//                sp.remoteSub = readSession.subroutine("SET.BV.AUTO.PLACEMENT.OP", 3);
-//                sp.localFile = localSession.openFile("AFFILIATE.ORDERS");
-//                sp.list = sp.doSelect();
-//                UniSelectList list3 = readSession.selectList(3);
-//                list3.getList(listName);
-//                UniDynArray temp = list3.readList();
-//                Double itemCount = new Double(temp.dcount());
-//                Double itemsDone = new Double(0);
-//                Double pctDone = new Double(0);
-//                list3.clearList();
-//                list3 = getList(readSession, listName);
-//                int recordCount = 0;
-//                while (!sp.list.isLastRecordRead()) {
-//                    try {
-//                        String recordId = sp.list.next().toString();
-//                        if (recordId != null && !recordId.isEmpty()) {
-//                            UniDynArray aoRec = new UniDynArray(sp.localFile.read(recordId));
-//                            String payingId = aoRec.extract(8).toString();
-//                            String orderDate = aoRec.extract(161).toString();
-//                            String placement = sp.callSub(payingId, orderDate);
-//                            if (!placement.isEmpty()) {
-//                                recordCount++;
-//                                aoRec.replace(151, placement);
-//                                sp.localFile.write(recordId, aoRec);
-//                                System.out.println(Integer.toString(recordCount) + "  " + recordId);
-//
-//                            }
-//                        }
-//                    } catch (UniFileException ex) {
-//                        Logger.getLogger(SetPlacement.class
-//                                .getName()).log(Level.SEVERE, null, ex);
-//
-//                    } catch (UniSelectListException ex) {
-//                        Logger.getLogger(SetPlacement.class
-//                                .getName()).log(Level.SEVERE, null, ex);
-//
-//                    } catch (UniSubroutineException ex) {
-//                        Logger.getLogger(SetPlacement.class
-//                                .getName()).log(Level.SEVERE, null, ex);
-//
-//                    }
-//                }
-//            } catch (UniSessionException ex) {
-//                Logger.getLogger(SetPlacement.class
-//                        .getName()).log(Level.SEVERE, null, ex);
-//            }
-//        }
+    private UvData getOrdersRelease(String orderId) throws NotFoundException, RecordLockException {
+        UvData uvData = new UvData();
+        uvData.setId(orderId);
+        int result = FileUtils.lockRecord(writeFiles.get("ORDERS.RELEASE"), uvData);
+        if (result == UVE_RNF) {
+            result = FileUtils.unlockRecord(writeFiles.get("ORDERS.RELEASE"), uvData);
+            return null;
+        }
+        return uvData;
     }
-
 }

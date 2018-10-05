@@ -16,7 +16,7 @@ import com.webfront.exception.NotFoundException;
 import com.webfront.exception.RecordLockException;
 import com.webfront.u2.model.DynArray;
 import com.webfront.u2.model.UvData;
-import com.webfront.util.FileUtils;
+import com.webfront.u2.util.FileUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

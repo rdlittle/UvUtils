@@ -9,7 +9,7 @@ import asjava.uniclientlibs.UniDynArray;
 import static asjava.uniclientlibs.UniTokens.UVE_RNF;
 import com.webfront.u2.model.Prompt;
 import com.webfront.u2.model.UvData;
-import com.webfront.util.FileUtils;
+import com.webfront.u2.util.FileUtils;
 
 /**
  *

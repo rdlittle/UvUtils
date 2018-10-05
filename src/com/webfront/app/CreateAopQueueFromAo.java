@@ -14,7 +14,7 @@ import asjava.uniobjects.UniSelectListException;
 import asjava.uniobjects.UniSessionException;
 import com.webfront.u2.model.Prompt;
 import com.webfront.u2.model.UvData;
-import com.webfront.util.FileUtils;
+import com.webfront.u2.util.FileUtils;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;

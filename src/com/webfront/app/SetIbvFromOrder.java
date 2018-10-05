@@ -14,7 +14,7 @@ import asjava.uniobjects.UniSubroutine;
 import com.webfront.exception.NotFoundException;
 import com.webfront.exception.RecordLockException;
 import com.webfront.u2.model.UvData;
-import com.webfront.util.FileUtils;
+import com.webfront.u2.util.FileUtils;
 import com.webfront.util.Result;
 import com.webfront.util.SysUtils;
 import java.util.logging.Level;

@@ -24,6 +24,8 @@ import com.webfront.util.SysUtils;
 import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -50,6 +52,8 @@ public class RecalcIbv extends BaseApp {
     String exchangeRate;
     String orderDate;
     private ExchangeRate rates;
+    public int today;
+    public int entryDate;
 
     @Override
     public boolean mainLoop() {
@@ -58,6 +62,7 @@ public class RecalcIbv extends BaseApp {
             teardown();
             return false;
         }
+        today = Integer.parseInt(SysUtils.getIdate(readSession, ""));
         String aoId;
         String maOrderId;
         aoFileName = "";
@@ -90,7 +95,7 @@ public class RecalcIbv extends BaseApp {
                 try {
                     aoRec = getAo(aoId);
                 } catch (NotFoundException ex) {
-                    progress.display(aoId+ " not found");
+                    progress.display(aoId + " not found");
                     continue;
                 } catch (RecordLockException ex) {
                     Logger.getLogger(RecalcIbv.class.getName()).log(Level.SEVERE, null, ex);
@@ -104,9 +109,16 @@ public class RecalcIbv extends BaseApp {
                 orderDate = aoRec.getData().extract(161).toString();
                 homeCountry = aoRec.getData().extract(290).toString();
                 reportingCurrency = aoRec.getData().extract(368).toString();
+                String commissionType = aoRec.getData().extract(175).toString();
+                entryDate = Integer.parseInt(aoRec.getData().extract(3).toString());
 
                 try {
-                    exchangeRate = rates.getExchangeRate(reportingCurrency, "USD", orderDate);
+                    if (commissionType.equals("F") || reportingCurrency.equals("USD")) {
+                        exchangeRate = "1.0000";
+                    } else {
+                        exchangeRate = rates.getExchangeRate(reportingCurrency, "USD", orderDate);
+                    }
+
                 } catch (UniException ex) {
                     Logger.getLogger(RecalcIbv.class.getName()).log(Level.SEVERE, null, ex);
                     progress.display("Error from ExchangeRates: " + ex.getMessage());
@@ -370,6 +382,20 @@ public class RecalcIbv extends BaseApp {
     }
 
     void updateIbv(UvData orderRec) {
+        boolean isAwarded = false;
+        int orderAge = today - entryDate;
+        String comments = orderRec.getData().extract(58, 2).toString();
+        Pattern p1 = Pattern.compile("Ibv Placed into default placement \\d{9}\\-\\d{3} .+");
+        Pattern p2 = Pattern.compile("An IBV Amount of \\d{1,2}\\.\\d{2} was awarded on \\d{2}/\\d{2}/\\d{4}\\.");
+        Matcher m1 = p1.matcher(comments);
+        Matcher m2 = p2.matcher(comments);        
+        if (orderAge > 2) {
+            isAwarded = true;
+        } else if (m1.matches()) {
+            isAwarded = true;
+        } else if (m2.matches()) {
+            isAwarded = true;
+        }
         UniDynArray placements = orderRec.getData().extract(151);
         int placementCount = placements.dcount(1);
         for (int i = 1; i <= placementCount; i++) {
@@ -377,9 +403,6 @@ public class RecalcIbv extends BaseApp {
             UniDynArray uda = new UniDynArray();
             String placementId = orderRec.getData().extract(151, i).toString();
             String placementAmount = orderRec.getData().extract(152, i).toString();
-//            if (placementAmount.equals("0")) {
-//                continue;
-//            }
             ibvRec.setId(placementId);
             String target = orderRec.getId();
             String orderRef = orderRec.getData().extract(30).toString();
@@ -389,6 +412,9 @@ public class RecalcIbv extends BaseApp {
                 target = "PC" + target;
             }
             ibvFileName = "IBV.PROJ";
+            if (isAwarded) {
+                ibvFileName = "IBV";
+            }
             int result = FileUtils.lockRecord(writeFiles.get(ibvFileName), ibvRec);
             uda = ibvRec.getData();
             if (result == UVE_RNF && isReleased) {
@@ -399,30 +425,13 @@ public class RecalcIbv extends BaseApp {
                 uda.replace(3, r.location, placementAmount);
                 ibvRec.setData(uda);
             } else {
-                if (aoFileName.equals("AFFILIATE.ORDERS")) {
-                    addIbv(uda, orderRec, placementAmount);
-                } else {
-                    result = FileUtils.unlockRecord(writeFiles.get(ibvFileName), ibvRec);
-                    ibvFileName = "IBV";
-                    result = FileUtils.lockRecord(writeFiles.get(ibvFileName), ibvRec);
-                    if (result == UVE_RNF) {
-                        uda = new UniDynArray();
-                    } else {
-                        uda = ibvRec.getData();
-                    }
-                    r = SysUtils.locate(target, uda, 2);
-                    if (r.isSuccess) {
-                        uda.replace(3, r.location, placementAmount);
-                    } else {
-                        addIbv(uda, orderRec, placementAmount);
-                    }
-                }
+                addIbv(uda, orderRec, placementAmount);
                 ibvRec.setData(uda);
             }
             result = FileUtils.writeRecord(writeFiles.get(ibvFileName), ibvRec);
             result = FileUtils.unlockRecord(writeFiles.get(ibvFileName), ibvRec);
             UniDynArray oRec = orderRec.getData();
-            if(isReleased) {
+            if (isAwarded) {
                 oRec.replace(153, i, "U");
             } else {
                 oRec.replace(153, i, "1");

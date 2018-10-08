@@ -6,6 +6,12 @@
 package com.webfront.util;
 
 import asjava.uniclientlibs.UniDynArray;
+import asjava.uniobjects.UniCommand;
+import asjava.uniobjects.UniCommandException;
+import asjava.uniobjects.UniSession;
+import asjava.uniobjects.UniSessionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -70,5 +76,41 @@ public class SysUtils {
         }
         return r;
     }
-
+    
+    public static String getIdate(UniSession session, String oDate) {
+        try {
+            String args = "ODATE";
+            if (oDate != "") {
+                args += " "+oDate;
+            }
+            UniCommand cmd = session.command(args);
+            cmd.exec();
+            String response = cmd.response();
+            return response.split(" ")[0];
+        } catch (UniCommandException ex) {
+            Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UniSessionException ex) {
+            Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "";
+    }
+    
+    public static String getOdate(UniSession session, String iDate) {
+        try {
+            String args = "ODATE";
+            if (iDate != "") {
+                args += " "+iDate;
+            }            
+            UniCommand cmd = session.command(args);
+            cmd.exec();
+            String response = cmd.response();
+            return response.split(" ")[0];
+        } catch (UniSessionException ex) {
+            Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UniCommandException ex) {
+            Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "";
+    }   
+    
 }

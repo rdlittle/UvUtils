@@ -111,6 +111,12 @@ public class SysUtils {
             Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
         }
         return "";
-    }   
+    } 
+    
+    public static String asString(int value) {
+        StringBuilder sb = new StringBuilder();
+        sb.append((char)value);
+        return sb.toString();
+    }
     
 }

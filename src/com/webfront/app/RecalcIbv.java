@@ -116,7 +116,7 @@ public class RecalcIbv extends BaseApp {
                     if (commissionType.equals("F") || reportingCurrency.equals("USD")) {
                         exchangeRate = "1.0000";
                     } else {
-                        exchangeRate = rates.getExchangeRate(reportingCurrency, "USD", orderDate);
+                        exchangeRate = rates.getExchangeRate("","",reportingCurrency, "USD", orderDate, "");
                     }
 
                 } catch (UniException ex) {

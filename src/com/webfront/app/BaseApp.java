@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.stage.Stage;
 
 /**
  *
@@ -59,6 +60,7 @@ public class BaseApp extends AbstractApp {
 
     Progress progress;
     Program program;
+    private Stage stage;
 
     public void openFiles(ArrayList<UvFile> fileList) throws UniSessionException {
         for (UvFile uvf : fileList) {
@@ -177,6 +179,14 @@ public class BaseApp extends AbstractApp {
         }
         listName = program.getListName();
         progress.updateLed(null, true);
+    }
+    
+    public Stage getStage() {
+        return this.stage;
+    }
+    
+    public void setStage(Stage s) {
+        this.stage = s;
     }
 
 }

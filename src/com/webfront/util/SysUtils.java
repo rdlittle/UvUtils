@@ -171,7 +171,7 @@ public class SysUtils {
             Double p = value * mult;
             String result = nf.format(p);
             while(result.startsWith("0")) {
-                result.replaceFirst("0", "");
+                result = result.replaceFirst("0", "");
             }
             if (!hasDecimal) {
                 result = result.replace(".", "");

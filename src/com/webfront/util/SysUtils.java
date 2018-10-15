@@ -6,12 +6,14 @@
 package com.webfront.util;
 
 import asjava.uniclientlibs.UniDynArray;
+import asjava.uniclientlibs.UniStringException;
 import asjava.uniobjects.UniCommand;
 import asjava.uniobjects.UniCommandException;
 import asjava.uniobjects.UniSession;
 import asjava.uniobjects.UniSessionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.text.NumberFormat;
 
 /**
  *
@@ -117,6 +119,66 @@ public class SysUtils {
         StringBuilder sb = new StringBuilder();
         sb.append((char)value);
         return sb.toString();
+    }
+    
+    public static UniDynArray oconvs(UniSession session, UniDynArray uda, String convCode) {
+        int vals = uda.dcount(1);
+        for (int val = 1; val <= vals; val++) {
+            String value = uda.extract(1, val).toString();
+            try {
+               value = session.oconv(value, convCode).toString();
+               uda.replace(1, val, value);
+            } catch (UniStringException ex) {
+                Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return uda;
+    }
+    
+    public static UniDynArray iconvs(UniSession session, UniDynArray uda, String convCode) {
+        int vals = uda.dcount(1);
+        for (int val = 1; val <= vals; val++) {
+            String value = uda.extract(1, val).toString();
+            try {
+               value = session.iconv(value, convCode).toString();
+               uda.replace(1, val, value);
+            } catch (UniStringException ex) {
+                Logger.getLogger(SysUtils.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return uda;
+    }
+    
+    public static UniDynArray muls(UniDynArray uda) {
+        int vals = uda.dcount(1);
+        NumberFormat nf = NumberFormat.getInstance();
+        nf.setMaximumFractionDigits(2);
+        for (int val = 1; val <= vals; val++) {
+            String v = uda.extract(1, val).toString();
+            String m = uda.extract(2, val).toString();
+            if (v.isEmpty() || m.isEmpty()) {
+                continue;
+            }
+            boolean hasDecimal = v.indexOf(".") > 0;
+            Double value = Double.parseDouble(v);
+            Double mult = Double.parseDouble(m);
+            if (!hasDecimal) {
+                value /= 100;
+            }
+            if(m.indexOf(".") == -1) {
+                mult /= 100;
+            }
+            Double p = value * mult;
+            String result = nf.format(p);
+            while(result.startsWith("0")) {
+                result.replaceFirst("0", "");
+            }
+            if (!hasDecimal) {
+                result = result.replace(".", "");
+            }
+            uda.replace(1, val, result);
+        }
+        return uda.extract(1);
     }
     
 }

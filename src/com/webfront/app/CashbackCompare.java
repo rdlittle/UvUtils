@@ -17,6 +17,7 @@ import com.webfront.exception.NotFoundException;
 import com.webfront.u2.model.UvData;
 import com.webfront.u2.util.AffiliateOrder;
 import com.webfront.u2.util.MaOrder;
+import com.webfront.util.CalcIbvCashback;
 import com.webfront.util.ExchangeRate;
 import com.webfront.util.SysUtils;
 import java.io.File;
@@ -48,6 +49,7 @@ public class CashbackCompare extends BaseApp {
     private String newCashback;
     private UniDynArray aoIds;
     private UniDynArray report;
+    private CalcIbvCashback calculator;
 
     @Override
     public boolean mainLoop() {
@@ -60,6 +62,7 @@ public class CashbackCompare extends BaseApp {
             aoIds = new UniDynArray();
             report = new UniDynArray();
             rates = new ExchangeRate(readSession);
+            calculator = new CalcIbvCashback(readSession);
             UniSelectList list = readSession.selectList(3);
             list.getList(listName);
             UniDynArray temp = list.readList();
@@ -89,9 +92,15 @@ public class CashbackCompare extends BaseApp {
                     orderId = aoRec.getData().extract(30).toString();
                     orderRec = orderReader.getOrder(orderId);
                     String oldCashback = orderRec.getData().extract(375).toString();
-                    newCashback = recalcCashback(aoRec).toString();
-                    newCashback = applyExchangeRates(aoRec);
+                    calculator.calc(aoRec);
+                    newCashback = calculator.getCashbackTotal();
                     if (newCashback.equals(oldCashback)) {
+                        continue;
+                    }
+                    int oldCb = Integer.parseInt(oldCashback);
+                    int newCb = Integer.parseInt(newCashback);
+                    int diff = Math.abs(oldCb - newCb);
+                    if (diff < 3) {
                         continue;
                     }
                     StringBuilder sb = new StringBuilder(aoId);

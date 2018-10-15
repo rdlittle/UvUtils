@@ -146,54 +146,6 @@ public class CashbackCompare extends BaseApp {
         return true;
     }
 
-    UniDynArray recalcCashback(UvData aoRec) throws UniSessionException, UniSubroutineException {
-        UniDynArray iList = new UniDynArray();
-        UniDynArray oList = new UniDynArray();
-        UniDynArray eList = new UniDynArray();
-        String aggId = aoRec.getData().extract(181, 1).toString();
-        String storeId = aoRec.getData().extract(157, 1).toString();
-        String ppcId = aoRec.getData().extract(8).toString();
-        String orderDate = aoRec.getData().extract(161, 1).toString();
-
-        iList.replace(4, aggId);
-        iList.replace(5, storeId);
-        iList.replace(6, ppcId);
-        iList.replace(7, orderDate);
-        iList.replace(8, aoRec.getData().extract(371));
-        iList.replace(9, aoRec.getData().extract(173));
-        iList.replace(10, aoRec.getData().extract(180));
-
-        UniSubroutine subroutine = readSession.subroutine("getCashbackCalc.uvs", 3);
-        subroutine.setArg(0, iList);
-        subroutine.setArg(1, oList);
-        subroutine.setArg(2, eList);
-        subroutine.call();
-        eList = subroutine.getArgDynArray(2);
-        svrStatus = Integer.parseInt(eList.extract(1).toString());
-        svrCtrlCode = eList.extract(5).toString();
-        svrMessage = eList.extract(2).toString();
-        if (svrStatus == -1) {
-            return null;
-        }
-        oList = subroutine.getArgDynArray(1);
-        return new UniDynArray(SysUtils.sum(oList.extract(1)));
-    }
-
-    public String applyExchangeRates(UvData aoRec) throws UniStringException {
-        String hcc = aoRec.getData().extract(290).toString();
-        String reportingCurrency = aoRec.getData().extract(368).toString();
-        String iDate = aoRec.getData().extract(161).toString();
-        String amount = readSession.oconv(newCashback, "mr2").toString();
-        try {
-            UniDynArray rateInfo = rates.getExchangeRateInfo("", hcc, reportingCurrency, "", iDate, amount);
-            amount = readSession.iconv(rateInfo.extract(5).toString(), "mr22").toString();
-        } catch (UniException ex) {
-            Logger.getLogger(CashbackCompare.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return amount;
-
-    }
-
     class SaveTask extends Task<File> {
 
         private Stage stage;

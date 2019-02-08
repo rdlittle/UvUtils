@@ -2,7 +2,6 @@ package com.webfront.app;
 
 import asjava.uniclientlibs.UniDynArray;
 import static asjava.uniclientlibs.UniTokens.UVE_RNF;
-import static asjava.uniobjects.UniObjectsTokens.LOCK_NO_LOCK;
 import asjava.uniobjects.UniSelectList;
 import asjava.uniobjects.UniSelectListException;
 import asjava.uniobjects.UniSessionException;
